@@ -25,8 +25,6 @@ class VideoManager(IVideoManager):
             target=self._working_thread_handle, daemon=True)
 
     def _get_video_path(self) -> str:
-        # adapt this to your actual config structure
-        # example: return self._config_manager.get_value("video", "path")
         return "videos/test.mp4"
 
     def start(self) -> None:
@@ -50,6 +48,11 @@ class VideoManager(IVideoManager):
         self._logger.log(ConstStrings.LOG_NAME_DEBUG, "[VIDEO] stopped")
 
     def _working_thread_handle(self) -> None:
+        fps = self._cap.get(cv2.CAP_PROP_FPS)
+        if not fps or fps <= 1:
+            fps = 60.0
+        frame_delay = 1.0 / fps
+
         while self._is_running:
             ret, frame = self._cap.read()
             if not ret:
@@ -57,10 +60,9 @@ class VideoManager(IVideoManager):
                 continue
 
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
             self._event_bus.send_video_frame_signal.emit(rgb)
 
-            time.sleep(Consts.WORKING_LOOP_DELAY)
+            time.sleep(frame_delay)
 
     def _on_video_click_slot(self, x: int, y: int) -> None:
         self._logger.log(ConstStrings.LOG_NAME_DEBUG,
