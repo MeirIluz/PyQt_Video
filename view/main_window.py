@@ -4,8 +4,9 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QFont
 
 from globals.consts.const_styles import ConstStyles
+
 from infrastructure.factories.infrastructure_factory import InfrastructureFactory
-from video_click_coords import VideoLabel
+from view.sub_widgests.video_label import VideoLabel
 from view_model.main_window_view_model import MainWindowViewModel
 
 
