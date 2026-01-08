@@ -20,7 +20,7 @@ class MainWindow(QMainWindow):
         self._info_label = QLabel("Click on the video to get (x, y).")
         self._info_label.setAlignment(Qt.AlignCenter)
 
-        self._last_marker = None  
+        self._last_marker = None
 
         self._init_ui()
         self._register_signals()
@@ -42,14 +42,17 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def _register_signals(self) -> None:
+        self._video_label.clicked.connect(self._on_marker_changed_slot)
         self._video_label.clicked.connect(self._view_model.on_video_clicked)
 
         self._view_model.click_text_changed.connect(self._info_label.setText)
 
         if hasattr(self._view_model, "marker_changed"):
-            self._view_model.marker_changed.connect(self._on_marker_changed_slot)
+            self._view_model.marker_changed.connect(
+                self._on_marker_changed_slot)
 
-        self._event_bus.send_video_frame_signal.connect(self._on_new_frame_slot)
+        self._event_bus.send_video_frame_signal.connect(
+            self._on_new_frame_slot)
 
     @pyqtSlot(int, int)
     def _on_marker_changed_slot(self, x: int, y: int) -> None:
