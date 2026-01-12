@@ -10,3 +10,4 @@ class ConstStrings:
     LOG_MODE = "a"
     LOG_FORMATTER = "%(asctime)s - %(levelname)s - %(message)s"
     DATE_TIME_FORMAT = '%Y_%m_%d-%H_%M_%S'
+    APP_TITLE = "My PyQt Application"
