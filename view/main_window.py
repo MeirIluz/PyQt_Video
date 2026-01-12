@@ -1,95 +1,34 @@
-import cv2
-from PyQt5.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QLabel
-from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtGui import QImage, QPixmap, QPainter, QPen, QFont
+from PyQt5.QtWidgets import QMainWindow, QStackedWidget, QWidget
+from PyQt5.QtCore import Qt, QLocale
+from typing import List
 
-from globals.consts.const_styles import ConstStyles
-
-from infrastructure.factories.infrastructure_factory import InfrastructureFactory
-from view.sub_widgests.video_label import VideoLabel
+from globals.consts.const_strings import ConstStrings
 from view_model.main_window_view_model import MainWindowViewModel
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, view_model: MainWindowViewModel):
+    def __init__(self, view_model: MainWindowViewModel, pages: List[QWidget]):
         super().__init__()
         self._view_model = view_model
-        self._event_bus = InfrastructureFactory.create_event_bus()
-
-        self._video_label = VideoLabel()
-        self._info_label = QLabel("Click on the video to get (x, y).")
-        self._info_label.setAlignment(Qt.AlignCenter)
-
-        self._last_marker = None
+        self._pages = pages
+        self._stacked_widget = QStackedWidget()
 
         self._init_ui()
         self._register_signals()
 
     def _init_ui(self) -> None:
-        self.setWindowTitle("PyQt Video Click Coordinates")
-        self.setMinimumSize(900, 600)
-        self.setStyleSheet(ConstStyles.MAIN_WINDOW_STYLE)
+        self.setWindowTitle(ConstStrings.APP_TITLE)
+        self.setWindowState(Qt.WindowMaximized)
+        self.setLayoutDirection(Qt.RightToLeft)
+        self.setLocale(QLocale(QLocale.Hebrew, QLocale.Israel))
 
-        main_layout = QVBoxLayout()
-        main_layout.setContentsMargins(20, 20, 20, 20)
-        main_layout.setSpacing(10)
+        self.setCentralWidget(self._stacked_widget)
 
-        main_layout.addWidget(self._video_label, stretch=1)
-        main_layout.addWidget(self._info_label)
-
-        central_widget = QWidget()
-        central_widget.setLayout(main_layout)
-        self.setCentralWidget(central_widget)
+        for page in self._pages:
+            self._stacked_widget.addWidget(page)
 
     def _register_signals(self) -> None:
-        self._video_label.clicked.connect(self._on_marker_changed_slot)
-        self._video_label.clicked.connect(self._view_model.on_video_clicked)
-
-        self._view_model.click_text_changed.connect(self._info_label.setText)
-
-        if hasattr(self._view_model, "marker_changed"):
-            self._view_model.marker_changed.connect(
-                self._on_marker_changed_slot)
-
-        self._event_bus.send_video_frame_signal.connect(
-            self._on_new_frame_slot)
-
-    @pyqtSlot(int, int)
-    def _on_marker_changed_slot(self, x: int, y: int) -> None:
-        self._last_marker = (x, y)
-
-    @pyqtSlot(object)
-    def _on_new_frame_slot(self, rgb_frame) -> None:
-        if rgb_frame is None:
-            return
-
-        h, w, ch = rgb_frame.shape
-
-        self._video_label.set_image_size(w, h)
-
-        qimg = QImage(rgb_frame.data, w, h, ch * w, QImage.Format_RGB888)
-        pm = QPixmap.fromImage(qimg)
-
-        if self._last_marker is not None:
-            x, y = self._last_marker
-            painter = QPainter(pm)
-            painter.setRenderHint(QPainter.Antialiasing, True)
-
-            pen = QPen(Qt.red)
-            pen.setWidth(3)
-            painter.setPen(pen)
-            painter.drawEllipse(x - 6, y - 6, 12, 12)
-            painter.drawLine(x - 12, y, x + 12, y)
-            painter.drawLine(x, y - 12, x, y + 12)
-
-            painter.setPen(Qt.yellow)
-            painter.setFont(QFont("Arial", 14))
-            painter.drawText(x + 10, y - 10, f"({x}, {y})")
-            painter.end()
-
-        scaled = pm.scaled(
-            self._video_label.size(),
-            Qt.KeepAspectRatio,
-            Qt.SmoothTransformation
-        )
-        self._video_label.setPixmap(scaled)
+        if hasattr(self._view_model, "switch_page_signal"):
+            self._view_model.switch_page_signal.connect(
+                lambda: self._stacked_widget.setCurrentIndex(1)
+            )
