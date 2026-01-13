@@ -1,6 +1,5 @@
 from enum import Enum
 
-
-class Example(Enum):
-    FIRST_EXAMPLE = 1
-    SECOND_EXAMPLE = 3
+class VideoLayoutRegionKey(Enum):
+    VIDEO_REGION = "video_region"
+    INFO_REGION = "info_region"
